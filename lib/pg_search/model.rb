@@ -26,6 +26,14 @@ module PgSearch
         class_attribute :pg_search_multisearchable_options
         self.pg_search_multisearchable_options = options
       end
+
+      def searchable(options)
+        include PgSearch::Searchable
+        class_attribute :pg_search_searchable_options
+        self.pg_search_searchable_options = options
+
+        pg_search_scope(:search, options)
+      end
     end
 
     def method_missing(symbol, *args)

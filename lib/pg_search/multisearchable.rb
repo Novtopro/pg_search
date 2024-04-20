@@ -16,6 +16,26 @@ module PgSearch
       end
     end
 
+    def searchable_text_with_weight
+      against = pg_search_multisearchable_options[:against]
+      against = against.to_a if against.is_a?(Hash)
+      against = Array(against)
+      against.map do |item|
+        method = item.is_a?(Array) ? item.first : item
+        weight = item.is_a?(Array) ? item.last : "A"
+        content = send(method).to_s
+        [content, weight]
+      end
+    end
+
+    def tsv
+      sql = searchable_text_with_weight.map do |content, weight|
+        "SETWEIGHT(TO_TSVECTOR('pg_catalog.english', #{self.class.connection.quote(content)}), '#{weight}')"
+      end.join(" || ")
+
+      self.class.connection.execute("SELECT #{sql} AS tsv").first["tsv"]
+    end
+
     def searchable_text
       Array(pg_search_multisearchable_options[:against])
         .map { |symbol| send(symbol) }
@@ -24,7 +44,7 @@ module PgSearch
 
     def pg_search_document_attrs
       {
-        content: searchable_text
+        tsv: tsv
       }.tap do |h|
         if (attrs = pg_search_multisearchable_options[:additional_attributes])
           h.merge! attrs.to_proc.call(self)
