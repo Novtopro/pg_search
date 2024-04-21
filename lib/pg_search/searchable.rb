@@ -6,8 +6,7 @@ module PgSearch
   module Searchable
     def self.included(mod)
       mod.class_eval do
-        before_save :update_tsv
-        after_touch :update_tsv
+        after_commit :update_tsv
       end
     end
 
@@ -33,7 +32,7 @@ module PgSearch
 
     def update_tsv
       column = pg_search_searchable_options.dig(:using, :tsearch, :tsvector_column) || :tsv
-      self[column] = tsv
+      self.update_columns(column => tsv)
     end
   end
 end
