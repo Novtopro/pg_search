@@ -7,7 +7,7 @@ module PgSearch
     def self.included(mod)
       mod.class_eval do
         before_save :update_tsv
-        before_touch :update_tsv
+        after_touch :update_tsv
       end
     end
 
